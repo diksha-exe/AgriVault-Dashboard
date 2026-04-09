@@ -24,6 +24,7 @@ import com.example.agrivault.ui.TransactionViewModel
 import com.example.agrivault.ui.TransactionViewModelFactory
 import com.example.agrivault.AgriVaultApplication
 import com.example.agrivault.ui.AgriVaultPieChart
+import com.example.agrivault.utils.CsvExporter
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.graphics.Color
@@ -54,6 +55,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AgriVaultUI(viewModel: TransactionViewModel) {
 
+    val context = LocalContext.current
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
 
@@ -132,11 +134,23 @@ fun AgriVaultUI(viewModel: TransactionViewModel) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Total Spending: ₹${transactions.sumOf { it.amount }}",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Total Spending: ₹${transactions.sumOf { it.amount }}",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                TextButton(onClick = {
+                    CsvExporter.exportTransactionsToCsv(context, transactions)
+                }) {
+                    Text("Export Reports")
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
