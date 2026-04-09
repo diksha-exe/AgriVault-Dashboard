@@ -23,41 +23,41 @@ You are provided with a **Jetpack Compose UI**. While the app looks functional, 
 * **Dependency Injection:** Hilt (Recommended)
 
 ---
+## 📁 Repository Structure
 
-##  Repository Structure
-Database: Room (Local) & MongoDB Atlas (Cloud Sync)
+**Database:** Room (Local) & MongoDB Atlas (Cloud Sync)
+
+```plaintext
 AgriVault-Android/
 ├── app/
-│   ├── build.gradle.kts       # Android build config (Room & WorkManager deps)
-│   ├── google-services.json   # (Optional) Placeholder for Firebase
+│   ├── build.gradle.kts         # Android build config (Room & WorkManager deps)
+│   ├── google-services.json     # (Optional) Placeholder for Firebase
 │   └── src/
 │       ├── main/
 │       │   ├── java/com/agrivault/app/
 │       │   │   ├── data/
-│       │   │   │   ├── AppDatabase.kt      # Placeholder for Room DB
-│       │   │   │   ├── TransactionDao.kt   # DAO Interface
-│       │   │   │   └── TransactionEntity.kt # SQL Entity
+│       │   │   │   ├── AppDatabase.kt        # Placeholder for Room DB
+│       │   │   │   ├── TransactionDao.kt     # DAO Interface
+│       │   │   │   └── TransactionEntity.kt  # SQL Entity
 │       │   │   ├── sync/
-│       │   │   │   └── SyncWorker.kt        # Placeholder for WorkManager
+│       │   │   │   └── SyncWorker.kt         # Placeholder for WorkManager
 │       │   │   ├── ui/
-│       │   │   │   └── theme/               # Color.kt, Type.kt, Theme.kt
-│       │   │   └── MainActivity.kt          # The UI with intentional bugs
+│       │   │   │   └── theme/                # Color.kt, Type.kt, Theme.kt
+│       │   │   └── MainActivity.kt           # UI with intentional bugs
 │       │   ├── res/
-│       │   │   ├── drawable/                # Logo and Icons
-│       │   │   ├── values/                  # strings.xml (Multi-language)
-│       │   │   └── xml/                     # network_security_config.xml
-│       │   └── AndroidManifest.xml          # Permissions (Internet/Network State)
-│       └── test/                                # Local Unit Tests
-├── gradle/                                      # Gradle Wrapper files
-├── .gitignore                                   # Standard Android gitignore
-├── build.gradle.kts                             # Project-level build file
-├── gradle.properties                            # Build cache and JVM settings
-├── local.properties.example                     # Template for API Keys
-├── README.md                                    # Competition Guide
-└── settings.gradle.kts                          # Project name and repositories
-
-
----
+│       │   │   ├── drawable/                 # Logo and Icons
+│       │   │   ├── values/                   # strings.xml (Multi-language)
+│       │   │   └── xml/                      # network_security_config.xml
+│       │   └── AndroidManifest.xml           # Permissions (Internet/Network State)
+│       └── test/                            # Local Unit Tests
+├── gradle/                                  # Gradle Wrapper files
+├── .gitignore                               # Standard Android gitignore
+├── build.gradle.kts                         # Project-level build file
+├── gradle.properties                        # Build cache and JVM settings
+├── local.properties.example                 # Template for API Keys
+├── README.md                                # Competition Guide
+└── settings.gradle.kts                      # Project name and repositories
+```
 
 ##  Getting Started
 
@@ -71,7 +71,6 @@ Copy the example properties file and add your credentials:
 ```bash
 cp local.properties.example local.properties
 
-```
 
 ### 3. Build & Run
 1. Open the project in Android Studio.
