@@ -10,10 +10,37 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import com.example.agrivault.ui.CategorySpending
+
 class TransactionViewModel(private val repository: TransactionRepository) : ViewModel() {
 
     // Expose all transactions as a StateFlow for the UI to collect
     val allTransactions: StateFlow<List<TransactionEntity>> = repository.allTransactions.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    // Calculate spending per category
+    val spendingByCategory: StateFlow<List<CategorySpending>> = allTransactions.map { transactions ->
+        if (transactions.isEmpty()) return@map emptyList()
+        
+        // For demo: group by title if categoryId is null, otherwise by category
+        // In a real app, we'd join with AgriculturalCategory
+        val grouped = transactions.groupBy { it.title }
+        val colors = listOf(Color(0xFF2E7D32), Color(0xFF53634F), Color(0xFF386566), Color(0xFF72796F), Color(0xFFBA1A1A))
+        
+        grouped.entries.mapIndexed { index, entry ->
+            CategorySpending(
+                categoryName = entry.key,
+                amount = entry.value.sumOf { it.amount },
+                color = colors[index % colors.size]
+            )
+        }
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
