@@ -15,8 +15,8 @@ data class TransactionEntity(
     @ColumnInfo(name = "amount")
     val amount: Double,
 
-    @ColumnInfo(name = "date")
-    val date: Long,
+    @ColumnInfo(name = "timestamp")
+    val timestamp: Long,
 
     @ColumnInfo(name = "categoryId")
     val categoryId: Int? = null

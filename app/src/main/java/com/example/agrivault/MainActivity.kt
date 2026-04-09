@@ -10,8 +10,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.agrivault.data.DummyData
+import com.example.agrivault.data.TransactionEntity
 import com.example.agrivault.ui.theme.AgriVaultTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.agrivault.ui.TransactionViewModel
+import com.example.agrivault.ui.TransactionViewModelFactory
+import com.example.agrivault.AgriVaultApplication
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
 
@@ -20,23 +26,26 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AgriVaultTheme {
-                AgriVaultUI()
+                // Initialize ViewModel with the repository from Application class
+                val viewModel: TransactionViewModel = viewModel(
+                    factory = TransactionViewModelFactory(
+                        (LocalContext.current.applicationContext as AgriVaultApplication).repository
+                    )
+                )
+                AgriVaultUI(viewModel)
             }
         }
     }
 }
 
 @Composable
-fun AgriVaultUI() {
+fun AgriVaultUI(viewModel: TransactionViewModel) {
 
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
 
-    val transactions = remember {
-        mutableStateListOf<TransactionEntity>().apply {
-            addAll(com.example.agrivault.data.DummyData.transactions)
-        }
-    }
+    // Collect transactions from ViewModel as State
+    val transactions by viewModel.allTransactions.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.padding(16.dp)) {
 
@@ -63,9 +72,9 @@ fun AgriVaultUI() {
         Button(onClick = {
             val amountValue = amount.toDoubleOrNull()
             if (title.isNotBlank() && amountValue != null && amountValue > 0) {
-                transactions.add(
+                // Add via ViewModel
+                viewModel.insert(
                     TransactionEntity(
-                        id = (transactions.maxOfOrNull { it.id } ?: 0) + 1,
                         title = title,
                         amount = amountValue,
                         timestamp = System.currentTimeMillis()
@@ -86,9 +95,10 @@ fun AgriVaultUI() {
         Spacer(modifier = Modifier.height(8.dp))
 
         LazyColumn {
-            items(transactions) { txn ->
+            items(transactions, key = { it.id }) { txn ->
                 Text("${txn.title} - ₹${txn.amount}")
             }
         }
     }
 }
+
