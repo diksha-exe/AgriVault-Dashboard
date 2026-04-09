@@ -23,8 +23,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.agrivault.ui.TransactionViewModel
 import com.example.agrivault.ui.TransactionViewModelFactory
 import com.example.agrivault.AgriVaultApplication
-import androidx.compose.ui.platform.LocalContext
 import com.example.agrivault.ui.AgriVaultPieChart
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -45,12 +50,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AgriVaultUI(viewModel: TransactionViewModel) {
 
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Collect transactions from ViewModel as State
     val transactions by viewModel.allTransactions.collectAsStateWithLifecycle()
@@ -61,95 +69,147 @@ fun AgriVaultUI(viewModel: TransactionViewModel) {
         transactions.groupBy { formatDateHeader(it.timestamp) }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
 
-        Text(text = "AgriVault Dashboard", style = MaterialTheme.typography.headlineLarge)
+            Text(text = "AgriVault Dashboard", style = MaterialTheme.typography.headlineLarge)
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Pie Chart Visualization
-        if (spendingByCategory.isNotEmpty()) {
-            AgriVaultPieChart(
-                spendingData = spendingByCategory,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
             Spacer(modifier = Modifier.height(16.dp))
-        }
 
-        OutlinedTextField(
-            value = title,
-            onValueChange = { title = it },
-            label = { Text("Title") },
-            modifier = Modifier.fillMaxWidth()
-        )
+            // Pie Chart Visualization
+            if (spendingByCategory.isNotEmpty()) {
+                AgriVaultPieChart(
+                    spendingData = spendingByCategory,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("Title") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        OutlinedTextField(
-            value = amount,
-            onValueChange = { amount = it },
-            label = { Text("Amount") },
-            modifier = Modifier.fillMaxWidth()
-        )
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+            OutlinedTextField(
+                value = amount,
+                onValueChange = { amount = it },
+                label = { Text("Amount") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Button(
-            onClick = {
-                val amountValue = amount.toDoubleOrNull()
-                if (title.isNotBlank() && amountValue != null && amountValue > 0) {
-                    viewModel.insert(
-                        TransactionEntity(
-                            title = title,
-                            amount = amountValue,
-                            timestamp = System.currentTimeMillis()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    val amountValue = amount.toDoubleOrNull()
+                    if (title.isNotBlank() && amountValue != null && amountValue > 0) {
+                        viewModel.insert(
+                            TransactionEntity(
+                                title = title,
+                                amount = amountValue,
+                                timestamp = System.currentTimeMillis()
+                            )
                         )
-                    )
-                    title = ""
-                    amount = ""
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Log Expense")
-        }
+                        title = ""
+                        amount = ""
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Log Expense")
+            }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Total Spending: ₹${transactions.sumOf { it.amount }}",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.primary
-        )
+            Text(
+                text = "Total Spending: ₹${transactions.sumOf { it.amount }}",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            groupedTransactions.forEach { (date, txns) ->
-                stickyHeader {
-                    Text(
-                        text = date,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(vertical = 8.dp),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                groupedTransactions.forEach { (date, txns) ->
+                    stickyHeader {
+                        Text(
+                            text = date,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface)
+                                .padding(vertical = 8.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
 
-                items(txns, key = { it.id }) { txn ->
-                    TransactionItem(txn)
+                    items(txns, key = { it.id }) { txn ->
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = {
+                                if (it == SwipeToDismissBoxValue.EndToStart) {
+                                    viewModel.delete(txn)
+                                    scope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = "Deleted ${txn.title}",
+                                            actionLabel = "Undo",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            viewModel.insert(txn)
+                                        }
+                                    }
+                                    true
+                                } else false
+                            }
+                        )
+
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            backgroundContent = { DismissBackground(dismissState) },
+                            content = { TransactionItem(txn) },
+                            enableDismissFromStartToEnd = false
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DismissBackground(dismissState: SwipeToDismissBoxState) {
+    val color = when (dismissState.dismissDirection) {
+        SwipeToDismissBoxValue.EndToStart -> Color(0xFFBA1A1A)
+        else -> Color.Transparent
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color)
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.CenterEnd
+    ) {
+        Icon(
+            imageVector = Icons.Default.Delete,
+            contentDescription = "Delete",
+            tint = Color.White
+        )
     }
 }
 
@@ -195,4 +255,3 @@ fun formatDateHeader(timestamp: Long): String {
         else -> date.format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))
     }
 }
-
