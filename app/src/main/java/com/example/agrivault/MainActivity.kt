@@ -11,7 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.agrivault.data.DummyData
-import com.example.agrivault.data.TransactionEntity
+import com.example.agrivault.ui.theme.AgriVaultTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -19,7 +19,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AgriVaultUI()
+            AgriVaultTheme {
+                AgriVaultUI()
+            }
         }
     }
 }
@@ -59,25 +61,27 @@ fun AgriVaultUI() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(onClick = {
-            // Add to list (NO validation yet → intentional bug)
-            transactions.add(
-                TransactionEntity(
-                    id = transactions.size, // ❌ bug (intentional)
-                    title = title,
-                    amount = amount.toDoubleOrNull() ?: 0.0,
-                    timestamp = System.currentTimeMillis()
+            val amountValue = amount.toDoubleOrNull()
+            if (title.isNotBlank() && amountValue != null && amountValue > 0) {
+                transactions.add(
+                    TransactionEntity(
+                        id = (transactions.maxOfOrNull { it.id } ?: 0) + 1,
+                        title = title,
+                        amount = amountValue,
+                        timestamp = System.currentTimeMillis()
+                    )
                 )
-            )
-
-            // ❌ not clearing input (intentional bug)
-
+                // Clear input fields after successful log
+                title = ""
+                amount = ""
+            }
         }) {
             Text("Log Expense")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Total Balance: ₹${transactions.sumOf { it.amount }}") // ❌ wrong label
+        Text("Total Expenses: ₹${transactions.sumOf { it.amount }}")
 
         Spacer(modifier = Modifier.height(8.dp))
 
