@@ -62,8 +62,3 @@ Your submission will be graded on whether you successfully fixed these 4 starter
 * **Semantic Error:** The dashboard displays "Total Balance" but only sums expenses. This is an accounting error—it should show "Total Spending."
 
 ---
-
-##  Submission Guidelines
-1. Fork this repository.
-2. Complete the **Set 1 (Local DB)** and **Set 2 (Sync)** tasks..
-```
