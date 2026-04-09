@@ -6,5 +6,10 @@ import com.example.agrivault.data.TransactionRepository
 
 class AgriVaultApplication : Application() {
     val database by lazy { AppDatabase.getDatabase(this) }
-    val repository by lazy { TransactionRepository(database.transactionDao()) }
+    val repository by lazy { 
+        TransactionRepository(
+            database.transactionDao(),
+            database.categoryDao()
+        ) 
+    }
 }

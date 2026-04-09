@@ -24,6 +24,7 @@ import com.example.agrivault.ui.TransactionViewModel
 import com.example.agrivault.ui.TransactionViewModelFactory
 import com.example.agrivault.AgriVaultApplication
 import androidx.compose.ui.platform.LocalContext
+import com.example.agrivault.ui.AgriVaultPieChart
 
 class MainActivity : ComponentActivity() {
 
@@ -53,17 +54,31 @@ fun AgriVaultUI(viewModel: TransactionViewModel) {
 
     // Collect transactions from ViewModel as State
     val transactions by viewModel.allTransactions.collectAsStateWithLifecycle()
+    val spendingByCategory by viewModel.spendingByCategory.collectAsStateWithLifecycle()
 
     // Grouping logic
     val groupedTransactions = remember(transactions) {
         transactions.groupBy { formatDateHeader(it.timestamp) }
     }
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
 
         Text(text = "AgriVault Dashboard", style = MaterialTheme.typography.headlineLarge)
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Pie Chart Visualization
+        if (spendingByCategory.isNotEmpty()) {
+            AgriVaultPieChart(
+                spendingData = spendingByCategory,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         OutlinedTextField(
             value = title,
