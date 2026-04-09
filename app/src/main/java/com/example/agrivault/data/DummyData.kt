@@ -7,13 +7,13 @@ object DummyData {
             id = 1,
             title = "Seeds",
             amount = 500.0,
-            timestamp = System.currentTimeMillis()
+            date = System.currentTimeMillis()
         ),
         TransactionEntity(
             id = 2,
             title = "Fertilizer",
             amount = 800.0,
-            timestamp = System.currentTimeMillis()
+            date = System.currentTimeMillis()
         )
     )
 }

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">AgriVault</string>
+    <string name="title">Title</string>
+    <string name="amount">Amount</string>
+    <string name="log_expense">Log Expense</string>
+
 </resources>
