@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import com.example.agrivault.ui.CategorySpending
+import com.example.agrivault.data.BackupData
 
 class TransactionViewModel(private val repository: TransactionRepository) : ViewModel() {
 
@@ -55,6 +56,16 @@ class TransactionViewModel(private val repository: TransactionRepository) : View
     fun delete(transaction: TransactionEntity) {
         viewModelScope.launch {
             repository.delete(transaction)
+        }
+    }
+
+    suspend fun getBackupSnapshot(): BackupData {
+        return repository.getBackupSnapshot()
+    }
+
+    fun restoreFromBackup(data: BackupData) {
+        viewModelScope.launch {
+            repository.restoreFromBackup(data)
         }
     }
 }

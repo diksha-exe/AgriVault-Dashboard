@@ -13,4 +13,10 @@ interface CategoryDao {
 
     @Query("SELECT * FROM agricultural_categories WHERE id = :id")
     suspend fun getCategoryById(id: Int): AgriculturalCategory?
+
+    @Query("SELECT * FROM agricultural_categories")
+    suspend fun getAllCategoriesSnapshot(): List<AgriculturalCategory>
+
+    @Query("DELETE FROM agricultural_categories")
+    suspend fun deleteAllCategories()
 }

@@ -32,6 +32,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.agrivault.utils.BackupUtility
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Download
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,13 +47,57 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AgriVaultTheme {
-                // Initialize ViewModel with the repository from Application class
                 val viewModel: TransactionViewModel = viewModel(
                     factory = TransactionViewModelFactory(
                         (LocalContext.current.applicationContext as AgriVaultApplication).repository
                     )
                 )
-                AgriVaultUI(viewModel)
+
+                val scope = rememberCoroutineScope()
+
+                // Backup Launcher
+                val createDocumentLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.CreateDocument("application/json")
+                ) { uri ->
+                    uri?.let {
+                        scope.launch {
+                            val snapshot = viewModel.getBackupSnapshot()
+                            val json = BackupUtility.serializeBackup(snapshot)
+                            withContext(Dispatchers.IO) {
+                                contentResolver.openOutputStream(it)?.use { stream ->
+                                    stream.write(json.toByteArray())
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Restore Launcher
+                val openDocumentLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.OpenDocument()
+                ) { uri ->
+                    uri?.let {
+                        scope.launch {
+                            val json = withContext(Dispatchers.IO) {
+                                contentResolver.openInputStream(it)?.bufferedReader()?.use { reader ->
+                                    reader.readText()
+                                }
+                            }
+                            json?.let {
+                                val data = BackupUtility.deserializeBackup(it)
+                                data?.let { backup ->
+                                    viewModel.restoreFromBackup(backup)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                AgriVaultUI(viewModel, onBackup = {
+                    createDocumentLauncher.launch("agrivault_backup.json")
+                }, onRestore = {
+                    openDocumentLauncher.launch(arrayOf("application/json"))
+                })
             }
         }
     }
@@ -53,7 +105,11 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun AgriVaultUI(viewModel: TransactionViewModel) {
+fun AgriVaultUI(
+    viewModel: TransactionViewModel,
+    onBackup: () -> Unit,
+    onRestore: () -> Unit
+) {
 
     val context = LocalContext.current
     var title by remember { mutableStateOf("") }
@@ -81,7 +137,23 @@ fun AgriVaultUI(viewModel: TransactionViewModel) {
                 .padding(16.dp)
         ) {
 
-            Text(text = "AgriVault Dashboard", style = MaterialTheme.typography.headlineLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "AgriVault Dashboard", style = MaterialTheme.typography.headlineLarge)
+                
+                // Backup/Restore Icons
+                Row {
+                    IconButton(onClick = onBackup) {
+                        Icon(Icons.Default.Upload, contentDescription = "Backup")
+                    }
+                    IconButton(onClick = onRestore) {
+                        Icon(Icons.Default.Download, contentDescription = "Restore")
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
