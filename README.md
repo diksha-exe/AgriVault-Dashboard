@@ -63,15 +63,6 @@ Your submission will be graded on whether you successfully fixed these 4 starter
 
 ---
 
-##  Evaluation Rubric
-| :--- | :--- | :--- | :--- |
-| **Persistence** | Room DB fully implemented with Migrations. | Data saves, but loses state on update. | No local database. |
-| **Sync Logic** | WorkManager handles WiFi-only sync. | Sync happens on every click (Heavy). | No cloud sync. |
-| **Data Integrity** | UUIDs used; zero-value validation. | Basic validation, but IDs still collide. | No validation. |
-| **UI/UX** | Multi-language support (Hindi/English). | Clean UI but English only. | Messy UI. |
-
----
-
 ##  Submission Guidelines
 1. Fork this repository.
 2. Complete the **Set 1 (Local DB)** and **Set 2 (Sync)** tasks..
