@@ -30,7 +30,57 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AgriVaultTheme {
-                AgriVaultUI()
+                val viewModel: TransactionViewModel = viewModel(
+                    factory = TransactionViewModelFactory(
+                        (LocalContext.current.applicationContext as AgriVaultApplication).repository
+                    )
+                )
+
+                val scope = rememberCoroutineScope()
+
+                // Backup Launcher
+                val createDocumentLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.CreateDocument("application/json")
+                ) { uri ->
+                    uri?.let {
+                        scope.launch {
+                            val snapshot = viewModel.getBackupSnapshot()
+                            val json = BackupUtility.serializeBackup(snapshot)
+                            withContext(Dispatchers.IO) {
+                                contentResolver.openOutputStream(it)?.use { stream ->
+                                    stream.write(json.toByteArray())
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Restore Launcher
+                val openDocumentLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.OpenDocument()
+                ) { uri ->
+                    uri?.let {
+                        scope.launch {
+                            val json = withContext(Dispatchers.IO) {
+                                contentResolver.openInputStream(it)?.bufferedReader()?.use { reader ->
+                                    reader.readText()
+                                }
+                            }
+                            json?.let {
+                                val data = BackupUtility.deserializeBackup(it)
+                                data?.let { backup ->
+                                    viewModel.restoreFromBackup(backup)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                AgriVaultUI(viewModel, onBackup = {
+                    createDocumentLauncher.launch("agrivault_backup.json")
+                }, onRestore = {
+                    openDocumentLauncher.launch(arrayOf("application/json"))
+                })
             }
         }
     }
@@ -38,7 +88,11 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AgriVaultUI() {
+fun AgriVaultUI(
+    viewModel: TransactionViewModel,
+    onBackup: () -> Unit,
+    onRestore: () -> Unit
+) {
 
     val context = LocalContext.current
 
@@ -51,7 +105,15 @@ fun AgriVaultUI() {
         }
     }
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
 
         // ✅ Localization
         Text(
@@ -59,7 +121,7 @@ fun AgriVaultUI() {
             style = MaterialTheme.typography.headlineMedium
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = title,
@@ -67,7 +129,12 @@ fun AgriVaultUI() {
             label = { Text(stringResource(R.string.title)) }
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("Title") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
         OutlinedTextField(
             value = amount,
@@ -126,11 +193,44 @@ fun AgriVaultUI() {
             Text("Backup")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Total Expenses: ₹${transactions.sumOf { it.amount }}")
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                groupedTransactions.forEach { (date, txns) ->
+                    stickyHeader {
+                        Text(
+                            text = date,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface)
+                                .padding(vertical = 8.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
 
-        Spacer(modifier = Modifier.height(8.dp))
+                    items(txns, key = { it.id }) { txn ->
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = {
+                                if (it == SwipeToDismissBoxValue.EndToStart) {
+                                    viewModel.delete(txn)
+                                    scope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = "Deleted ${txn.title}",
+                                            actionLabel = "Undo",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            viewModel.insert(txn)
+                                        }
+                                    }
+                                    true
+                                } else false
+                            }
+                        )
 
         LazyColumn {
             items(transactions, key = { it.id }) { txn ->
