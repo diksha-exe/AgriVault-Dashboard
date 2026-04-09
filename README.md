@@ -25,10 +25,37 @@ You are provided with a **Jetpack Compose UI**. While the app looks functional, 
 ---
 
 ##  Repository Structure
-* `app/src/main/java/com/agrivault/app/`: Kotlin source files.
-* `app/src/main/res/`: UI resources and XML layouts.
-* `local.properties.example`: Template for your API keys and DB URIs.
-* `schema/`: Contains the `database_diagram.png` for the required table structure.
+Database: Room (Local) & MongoDB Atlas (Cloud Sync)
+AgriVault-Android/
+├── app/
+│   ├── build.gradle.kts       # Android build config (Room & WorkManager deps)
+│   ├── google-services.json   # (Optional) Placeholder for Firebase
+│   └── src/
+│       ├── main/
+│       │   ├── java/com/agrivault/app/
+│       │   │   ├── data/
+│       │   │   │   ├── AppDatabase.kt      # Placeholder for Room DB
+│       │   │   │   ├── TransactionDao.kt   # DAO Interface
+│       │   │   │   └── TransactionEntity.kt # SQL Entity
+│       │   │   ├── sync/
+│       │   │   │   └── SyncWorker.kt        # Placeholder for WorkManager
+│       │   │   ├── ui/
+│       │   │   │   └── theme/               # Color.kt, Type.kt, Theme.kt
+│       │   │   └── MainActivity.kt          # The UI with intentional bugs
+│       │   ├── res/
+│       │   │   ├── drawable/                # Logo and Icons
+│       │   │   ├── values/                  # strings.xml (Multi-language)
+│       │   │   └── xml/                     # network_security_config.xml
+│       │   └── AndroidManifest.xml          # Permissions (Internet/Network State)
+│       └── test/                                # Local Unit Tests
+├── gradle/                                      # Gradle Wrapper files
+├── .gitignore                                   # Standard Android gitignore
+├── build.gradle.kts                             # Project-level build file
+├── gradle.properties                            # Build cache and JVM settings
+├── local.properties.example                     # Template for API Keys
+├── README.md                                    # Competition Guide
+└── settings.gradle.kts                          # Project name and repositories
+
 
 ---
 
@@ -52,13 +79,18 @@ cp local.properties.example local.properties
 3. Click the **Run** icon (Green arrow) to deploy to your device.
 
 ---
-
 ##  The "Answer Key": Hidden Logical Bugs
-Your submission will be graded on whether you successfully fixed these 4 starter issues:
 
-* **ID Collision:** The app currently uses `list.size` as a Primary Key. If an item is deleted, new items will have duplicate IDs.
-* **Input Guard:** There is no validation; the app allows logging empty names or ₹0.00 amounts.
-* **State Leak:** Input fields do not reset after clicking "Log Expense," leading to accidental duplicate entries.
-* **Semantic Error:** The dashboard displays "Total Balance" but only sums expenses. This is an accounting error—it should show "Total Spending."
+Before implementing new features, participants must identify and fix the following logical issues in `MainActivity.kt`:
 
----
+- **ID Collision:**  
+  The app uses `list.size` as a Primary Key. When items are deleted, new entries may reuse existing IDs, causing duplication and data inconsistency.
+  
+- **Input Validation Missing:**  
+  The app allows empty titles and ₹0.00 amounts. Proper validation must be implemented to ensure meaningful data entry.
+
+- **State Leak (UI Issue):**  
+  Input fields are not cleared after logging an expense, leading to accidental duplicate entries.
+
+- **Semantic Error (Incorrect Labeling):**  
+  The dashboard displays "Total Balance" but only calculates expenses. This should be corrected to "Total Spending" for accuracy.
